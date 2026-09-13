@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma schema for KING DAY platform
 
 generator client {
   provider = "prisma-client-js"
@@ -18,10 +17,26 @@ enum Role {
 
 enum OrderStatus {
   PLACED
+  PAYMENT_PENDING
+  PAYMENT_CONFIRMED
   PROCESSING
+  PACKED
   SHIPPED
+  OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  COD
+}
+
+enum PaymentMethod {
+  COD
+  RAZORPAY
 }
 
 model User {
@@ -29,6 +44,7 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  phone     String?
   role      Role     @default(CUSTOMER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -36,44 +52,62 @@ model User {
 }
 
 model Product {
-  id          String      @id @default(uuid())
-  slug        String      @unique
-  name        String
-  description String
-  mrp         Float
-  salePrice   Float
-  stock       Int
-  isPublished Boolean     @default(true)
-  imageUrl    String?
-  category    String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  orderItems  OrderItem[]
+  id               String      @id @default(uuid())
+  sku              String      @unique
+  slug             String      @unique
+  name             String
+  shortDescription String?
+  description      String
+  category         String
+  brand            String?     @default("KING DAY")
+  images           Json        // Array of image URL strings
+  mrp              Decimal     @db.Decimal(10, 2)
+  salePrice        Decimal     @db.Decimal(10, 2)
+  stock            Int         @default(0)
+  isPublished      Boolean     @default(true)
+  panIndiaEligible Boolean     @default(false)
+  ageSuitability   String?
+  weightCapacity   String?
+  specifications   Json?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  orderItems       OrderItem[]
 }
 
 model Order {
-  id             String      @id @default(uuid())
-  userId         String
-  user           User        @relation(fields: [userId], references: [id])
-  totalAmount    Float
-  status         OrderStatus @default(PLACED)
-  shippingName   String
-  shippingAddress String
-  shippingPin    String
-  shippingCity   String
-  shippingState  String
-  shippingPhone  String
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  orderItems     OrderItem[]
+  id                String        @id @default(uuid())
+  orderNumber       String        @unique
+  userId            String?
+  user              User?         @relation(fields: [userId], references: [id])
+  customerName      String
+  customerEmail     String
+  customerPhone     String
+  shippingAddress   String
+  shippingCity      String
+  shippingDistrict  String
+  shippingState     String
+  shippingPin       String
+  subtotal          Decimal       @db.Decimal(10, 2)
+  discount          Decimal       @default(0) @db.Decimal(10, 2)
+  deliveryCharge    Decimal       @default(0) @db.Decimal(10, 2)
+  totalAmount       Decimal       @db.Decimal(10, 2)
+  status            OrderStatus   @default(PLACED)
+  paymentStatus     PaymentStatus @default(PENDING)
+  paymentMethod     PaymentMethod @default(COD)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  orderItems        OrderItem[]
 }
 
 model OrderItem {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Float
+  price     Decimal  @db.Decimal(10, 2)
 }

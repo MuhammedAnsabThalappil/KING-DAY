@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { env } from '../config/env';
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   user?: {
     id: string;
-    role: string;
+    email: string;
+    role: 'CUSTOMER' | 'ADMIN' | 'MANAGER';
   };
 }
 
@@ -12,21 +14,25 @@ export const adminGuard = (req: AuthRequest, res: Response, next: NextFunction) 
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Authentication required. No token provided.' });
+    return res.status(401).json({ message: 'Authentication required. Access token missing.' });
   }
 
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as { id: string; role: string };
-    
+    const decoded = jwt.verify(token, env.JWT_SECRET) as {
+      id: string;
+      email: string;
+      role: 'CUSTOMER' | 'ADMIN' | 'MANAGER';
+    };
+
     if (decoded.role !== 'ADMIN' && decoded.role !== 'MANAGER') {
-      return res.status(403).json({ message: 'Forbidden. Admin or Manager role required.' });
+      return res.status(403).json({ message: 'Forbidden. Access restricted to Staff (ADMIN/MANAGER) only.' });
     }
 
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid or expired token.' });
+    return res.status(401).json({ message: 'Invalid or expired authorization token.' });
   }
 };
