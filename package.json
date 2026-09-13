@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "build": "npm run --prefix client build",
     "prisma:generate": "prisma generate",
-    "prisma:validate": "prisma validate",
     "seed": "ts-node prisma/seed.ts"
   },
   "devDependencies": {
