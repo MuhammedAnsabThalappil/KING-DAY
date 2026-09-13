@@ -1,15 +1,20 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Trash2, ArrowRight, ShieldCheck, Truck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShoppingBag, Trash2, ArrowRight, ShieldCheck, Truck, MessageCircle } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { buildWhatsAppCartUrl, formatINR } from '../../services/whatsappService';
 
 const Cart: React.FC = () => {
   const { cartItems, removeFromCart, updateQuantity, subtotal, cartCount } = useCart();
-  const navigate = useNavigate();
 
   const freeDeliveryThreshold = 3000;
   const progressToFreeDelivery = Math.min((subtotal / freeDeliveryThreshold) * 100, 100);
   const remainingForFreeDelivery = freeDeliveryThreshold - subtotal;
+
+  const handleOrderOnWhatsApp = () => {
+    const link = buildWhatsAppCartUrl(cartItems, subtotal);
+    window.open(link, '_blank');
+  };
 
   if (cartItems.length === 0) {
     return (
@@ -35,9 +40,9 @@ const Cart: React.FC = () => {
     <div className="pt-28 pb-16 min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 max-w-6xl">
         <h1 className="text-3xl lg:text-4xl font-black text-slate-900 mb-2">Shopping Cart ({cartCount})</h1>
-        <p className="text-slate-500 text-sm mb-8">Review items in your cart before proceeding to checkout</p>
+        <p className="text-slate-500 text-sm mb-8">Review items in your cart and order directly via WhatsApp</p>
 
-        {/* Free Delivery Bar */}
+        {/* Free Delivery Tracker */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm mb-8">
           <div className="flex items-center justify-between text-xs font-bold mb-2">
             <span className="flex items-center gap-1 text-slate-700">
@@ -47,7 +52,7 @@ const Cart: React.FC = () => {
               {remainingForFreeDelivery <= 0 ? (
                 <span className="text-green-600 font-extrabold">🎉 You unlocked FREE Delivery!</span>
               ) : (
-                `Add ₹${remainingForFreeDelivery.toLocaleString('en-IN')} more for FREE delivery`
+                `Add ${formatINR(remainingForFreeDelivery)} more for FREE delivery`
               )}
             </span>
           </div>
@@ -84,7 +89,7 @@ const Cart: React.FC = () => {
                   <div className="flex-grow">
                     <span className="text-[10px] font-extrabold uppercase text-slate-400">SKU: {item.product.sku}</span>
                     <h3 className="font-bold text-slate-900 text-sm sm:text-base line-clamp-1">{item.product.name}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">₹{salePrice.toLocaleString('en-IN')} each</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{formatINR(salePrice)} each</p>
 
                     <div className="flex items-center justify-between mt-3">
                       {/* Quantity Controls */}
@@ -109,7 +114,7 @@ const Cart: React.FC = () => {
 
                       <div className="flex items-center gap-4">
                         <span className="font-black text-slate-900 text-base">
-                          ₹{itemTotal.toLocaleString('en-IN')}
+                          {formatINR(itemTotal)}
                         </span>
                         <button
                           onClick={() => removeFromCart(item.product.id)}
@@ -127,34 +132,36 @@ const Cart: React.FC = () => {
           </div>
 
           {/* Cart Summary Sidebar */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm h-fit">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm h-fit">
             <h3 className="font-black text-slate-900 text-lg mb-4">Order Summary</h3>
 
             <div className="space-y-3 text-sm border-b border-slate-100 pb-4 mb-4">
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal ({cartCount} items)</span>
-                <span className="font-bold text-slate-900">₹{subtotal.toLocaleString('en-IN')}</span>
+                <span className="font-bold text-slate-900">{formatINR(subtotal)}</span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Estimated Shipping</span>
-                <span className="text-xs font-semibold text-slate-500">Calculated at Checkout</span>
+                <span className="text-xs font-semibold text-slate-500">Confirmed via WhatsApp</span>
               </div>
             </div>
 
             <div className="flex justify-between text-lg font-black text-slate-900 mb-6">
               <span>Subtotal</span>
-              <span>₹{subtotal.toLocaleString('en-IN')}</span>
+              <span>{formatINR(subtotal)}</span>
             </div>
 
+            {/* ORDER ON WHATSAPP Primary CTA */}
             <button
-              onClick={() => navigate('/checkout')}
-              className="w-full bg-brand-gradient hover:opacity-95 text-white font-extrabold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+              onClick={handleOrderOnWhatsApp}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 px-6 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 text-sm active:scale-95"
             >
-              Proceed to Checkout <ArrowRight className="w-4 h-4" />
+              <MessageCircle className="w-5 h-5 fill-current" />
+              ORDER ON WHATSAPP
             </button>
 
             <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-500 font-medium">
-              <ShieldCheck className="w-4 h-4 text-green-600" /> Secure 256-bit Encrypted Checkout
+              <ShieldCheck className="w-4 h-4 text-green-600" /> Instant Kozhikode Hub Availability Confirmation
             </div>
           </div>
 

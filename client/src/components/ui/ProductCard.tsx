@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, MessageCircle, Truck } from 'lucide-react';
 import { Product } from '../../types/schema';
 import { useCart } from '../../context/CartContext';
-import { generateWhatsAppEnquiryLink } from '../../services/whatsappService';
+import { buildWhatsAppProductUrl, formatINR } from '../../services/whatsappService';
 
 interface ProductCardProps {
   product: Product;
@@ -21,15 +21,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     ? product.images[0]
     : 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&w=600&q=80';
 
-  const handleWhatsAppClick = (e: React.MouseEvent) => {
+  const handleBuyNowWhatsApp = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const link = generateWhatsAppEnquiryLink({
-      productName: product.name,
-      sku: product.sku,
-      salePrice: salePrice,
-      productUrl: `${window.location.origin}/product/${product.slug}`,
-    });
+    const productUrl = `${window.location.origin}/product/${product.slug}`;
+    const link = buildWhatsAppProductUrl(product, productUrl);
     window.open(link, '_blank');
   };
 
@@ -93,11 +89,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Price Section */}
           <div className="flex items-baseline gap-2 mb-4 mt-2">
             <span className="text-2xl font-black text-slate-900">
-              ₹{salePrice.toLocaleString('en-IN')}
+              {formatINR(salePrice)}
             </span>
             {mrp > salePrice && (
               <span className="text-sm text-slate-400 line-through font-medium">
-                ₹{mrp.toLocaleString('en-IN')}
+                {formatINR(mrp)}
               </span>
             )}
           </div>
@@ -105,19 +101,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Action Buttons */}
           <div className="flex gap-2">
             <button
+              onClick={handleBuyNowWhatsApp}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-black py-3 px-2 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 active:scale-95"
+            >
+              <MessageCircle className="w-4 h-4 fill-current" />
+              BUY NOW
+            </button>
+            <button
               onClick={handleAddToCart}
               disabled={isOutOfStock}
-              className="flex-1 bg-brand-gradient hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold py-3 px-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+              className="flex-1 bg-slate-900 hover:bg-kingBlue disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold py-3 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5"
             >
               <ShoppingCart className="w-4 h-4" />
               {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
-            </button>
-            <button
-              onClick={handleWhatsAppClick}
-              title="Enquire on WhatsApp"
-              className="border border-green-500 text-green-600 hover:bg-green-500 hover:text-white p-3 rounded-xl transition-all flex items-center justify-center"
-            >
-              <MessageCircle className="w-4 h-4" />
             </button>
           </div>
         </div>
